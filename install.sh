@@ -5,7 +5,7 @@ serviceaccount=rabbitmq
 namespace="tanzu-postgres"
 kubectl=kubectl
 registry="registry.tanzu.vmware.com"
-operator_version="1.7.2"
+operator_version="1.8.0"
 gemfire_version="9.15.0"
 cluster_name="gemfire-cluster"
 install_helm=1
@@ -18,6 +18,7 @@ storageclassname=""
 wait_pod_timeout=60s
 cert_manager_version=1.9.1
 operator_name="postgres-operator"
+unpack_to_dir="/tmp"
 
 while [ $# -gt 0 ]; do
 
@@ -80,12 +81,12 @@ if [ $install_operator -eq 1 ]
 then
     echo "CONNECTING TO REGISTRY: $registry"
     export HELM_EXPERIMENTAL_OCI=1
-    helm registry login -u $vmwareuser -p $vmwarepassword registry.tanzu.vmware.com
-    helm pull oci://$registry/tanzu-sql-postgres/postgres-operator-chart --version $operator_version --untar --untardir /tmp
+    helm registry login -u $vmwareuser -p $vmwarepassword $registry
+    helm pull "oci://$registry/tanzu-sql-postgres/postgres-operator-chart" --version v$operator_version --untar --untardir $unpack_to_dir
 
     echo "INSTALL POSTGRES OPERATOR"
     #set +e
-    helm install $operator_name /tmp/postgres-operator/ --wait --namespace $namespace
+    helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
     helm ls --namespace $namespace
     #set -eo pipefail
 fi
