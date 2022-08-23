@@ -115,13 +115,13 @@ else
      echo "VERIFYING IMAGES:"
      docker images "postgres-*"
 
-     echo "PUSHING ${INSTANCE_IMAGE_NAME}"
      INSTANCE_IMAGE_NAME="${registry}/postgres-instance:$(cat ./images/postgres-instance-tag)"
+     echo "PUSHING ${INSTANCE_IMAGE_NAME}"
      docker tag $(cat ./images/postgres-instance-id) ${INSTANCE_IMAGE_NAME}
      docker push ${INSTANCE_IMAGE_NAME}
 
-     echo "PUSHING ${OPERATOR_IMAGE_NAME}"
      OPERATOR_IMAGE_NAME="${registry}/postgres-operator:$(cat ./images/postgres-operator-tag)"
+     echo "PUSHING ${OPERATOR_IMAGE_NAME}"
      docker tag $(cat ./images/postgres-operator-id) ${OPERATOR_IMAGE_NAME}
      docker push ${OPERATOR_IMAGE_NAME}
 
