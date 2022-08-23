@@ -19,6 +19,11 @@ wait_pod_timeout=60s
 cert_manager_version=1.9.1
 operator_name="postgres-operator"
 unpack_to_dir="/tmp"
+offline=1
+offline_path="~/Downloads"
+filename="postgres-for-kubernetes-v$operator_version"
+filename_with_extension="$filename.tar.gz"
+local_registry=localhost
 
 while [ $# -gt 0 ]; do
 
@@ -41,6 +46,14 @@ then
      exit 1
 fi
 
+if [ $create_registry_secret -eq 1 ]
+then
+     echo "CREATE DOCKER REGISTRY SECRET"
+     $kubectl create secret docker-registry image-pull-secret --namespace=$namespace --docker-server=$registry \
+          --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
+          | $kubectl apply -f-
+fi
+
 if [ -z $vmwarepassword ] 
 then
      echo "vmwarepassword not set"
@@ -52,46 +65,75 @@ if [ -z $storageclassname ]; then persistent=0; else persistent=1; fi
 echo "CREATE NAMESPACE $namespace if it does not exist..."
 $kubectl create namespace $namespace --dry-run=client -o yaml | $kubectl apply -f-
 
-if [ $install_helm -eq 1 ]
+if [ $offline -ne 1 ]
 then
-     echo "INSTALL HELM"
-     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-     chmod +x get_helm.sh
-     ./get_helm.sh
+
+     if [ $install_helm -eq 1 ]
+     then
+          echo "INSTALL HELM"
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          chmod +x get_helm.sh
+          ./get_helm.sh
+     fi
+
+     if [ $install_cert_manager -eq 1 ]
+     then
+          $kubectl create namespace cert-manager
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm install cert-manager jetstack/cert-manager --namespace cert-manager  --version $cert_manager_version --set installCRDs=true
+          $kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v$cert_manager_version/cert-manager.yaml
+     fi
+
+     if [ $install_operator -eq 1 ]
+     then
+          echo "CONNECTING TO REGISTRY: $registry"
+          export HELM_EXPERIMENTAL_OCI=1
+          helm registry login -u $vmwareuser -p $vmwarepassword $registry
+          helm pull "oci://$registry/tanzu-sql-postgres/postgres-operator-chart" --version v$operator_version --untar --untardir $unpack_to_dir
+
+          echo "INSTALL POSTGRES OPERATOR"
+          helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
+          helm ls --namespace $namespace
+     fi
+
+else
+     # offline installation
+     cwd=$(pwd)
+     cd $offline_path
+
+     echo "UNZIPPING ARCHIVE: $filename_with_extension"
+     tar xzf $filename_with_extension
+     cd $filename
+
+     echo "LOADING POSTGRES IMAGE..."
+     docker load -i ./images/postgres-instance
+     
+     echo "LOADING POSTGRES K8S OPERATOR IMAGE..."
+     docker load -i ./images/postgres-operator
+
+     echo "VERIFYING IMAGES:"
+     docker images "postgres-*"
+
+     echo "PUSHING ${INSTANCE_IMAGE_NAME}"
+     INSTANCE_IMAGE_NAME="${registry}/postgres-instance:$(cat ./images/postgres-instance-tag)"
+     docker tag $(cat ./images/postgres-instance-id) ${INSTANCE_IMAGE_NAME}
+     docker push ${INSTANCE_IMAGE_NAME}
+
+     echo "PUSHING ${OPERATOR_IMAGE_NAME}"
+     OPERATOR_IMAGE_NAME="${registry}/postgres-operator:$(cat ./images/postgres-operator-tag)"
+     docker tag $(cat ./images/postgres-operator-id) ${OPERATOR_IMAGE_NAME}
+     docker push ${OPERATOR_IMAGE_NAME}
+
+     if [ $install_operator -eq 1 ]
+     then
+          echo "INSTALL POSTGRES OPERATOR"
+          helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
+          helm ls --namespace $namespace
+     fi
+
+     cd $cwd
 fi
-
-if [ $install_cert_manager -eq 1 ]
-then
-     $kubectl create namespace cert-manager
-     helm repo add jetstack https://charts.jetstack.io
-     helm repo update
-     helm install cert-manager jetstack/cert-manager --namespace cert-manager  --version $cert_manager_version --set installCRDs=true
-     $kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v$cert_manager_version/cert-manager.yaml
-fi
-
-if [ $create_registry_secret -eq 1 ]
-then
-     echo "CREATE DOCKER REGISTRY SECRET"
-     $kubectl create secret docker-registry image-pull-secret --namespace=$namespace --docker-server=$registry \
-          --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
-          | $kubectl apply -f-
-fi
-
-if [ $install_operator -eq 1 ]
-then
-    echo "CONNECTING TO REGISTRY: $registry"
-    export HELM_EXPERIMENTAL_OCI=1
-    helm registry login -u $vmwareuser -p $vmwarepassword $registry
-    helm pull "oci://$registry/tanzu-sql-postgres/postgres-operator-chart" --version v$operator_version --untar --untardir $unpack_to_dir
-
-    echo "INSTALL POSTGRES OPERATOR"
-    #set +e
-    helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
-    helm ls --namespace $namespace
-    #set -eo pipefail
-fi
-
-exit 1
 
 # echo "WAIT FOR gemfire-controller-manager TO BE READY"
 # $kubectl wait pods -n $namespace -l app.kubernetes.io/component=gemfire-controller-manager \
