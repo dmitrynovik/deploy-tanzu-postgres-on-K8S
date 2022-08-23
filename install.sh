@@ -46,14 +46,6 @@ then
      exit 1
 fi
 
-if [ $create_registry_secret -eq 1 ]
-then
-     echo "CREATE DOCKER REGISTRY SECRET"
-     $kubectl create secret docker-registry image-pull-secret --namespace=$namespace --docker-server=$registry \
-          --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
-          | $kubectl apply -f-
-fi
-
 if [ -z $vmwarepassword ] 
 then
      echo "vmwarepassword not set"
@@ -64,6 +56,14 @@ if [ -z $storageclassname ]; then persistent=0; else persistent=1; fi
 
 echo "CREATE NAMESPACE $namespace if it does not exist..."
 $kubectl create namespace $namespace --dry-run=client -o yaml | $kubectl apply -f-
+
+if [ $create_registry_secret -eq 1 ]
+then
+     echo "CREATE DOCKER REGISTRY SECRET"
+     $kubectl create secret docker-registry image-pull-secret --namespace=$namespace --docker-server=$registry \
+          --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
+          | $kubectl apply -f-
+fi
 
 if [ $offline -ne 1 ]
 then
@@ -139,6 +139,7 @@ fi
 # $kubectl wait pods -n $namespace -l app.kubernetes.io/component=gemfire-controller-manager \
 #      --for condition=Ready --timeout $wait_pod_timeout
 # sleep 10
+exit 1
 
 echo "CREATE $clustername CLUSTER"
 ytt -f gemfire-crd.yml \
