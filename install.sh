@@ -78,7 +78,7 @@ then
 
      if [ $install_cert_manager -eq 1 ]
      then
-          $kubectl create namespace cert-manager
+          $kubectl create namespace cert-manager --dry-run=client -o yaml | $kubectl apply -f-
           helm repo add jetstack https://charts.jetstack.io
           helm repo update
           helm install cert-manager jetstack/cert-manager --namespace cert-manager  --version $cert_manager_version --set installCRDs=true
