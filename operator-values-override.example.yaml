@@ -1,0 +1,2 @@
+operatorImage: 127.0.0.1:36103/postgres-operator
+postgresImage: 127.0.0.1:36103/postgres-instance

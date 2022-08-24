@@ -1,0 +1,2 @@
+operatorImage: #@ operator-image
+postgresImage: #@ postgres-image
