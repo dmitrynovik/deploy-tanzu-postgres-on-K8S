@@ -128,7 +128,13 @@ else
      if [ $install_operator -eq 1 ]
      then
           echo "INSTALL POSTGRES OPERATOR"
-          helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
+          cp "$cwd/operator-values-override.yaml" ./
+          # TODO: ytt
+          helm install $operator_name "./operator" \
+               --values=operator-values-override.yaml \
+               --namespace=$namespace \
+               --wait 
+
           helm ls --namespace $namespace
      fi
 
