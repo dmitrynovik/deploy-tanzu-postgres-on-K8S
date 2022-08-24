@@ -1,3 +1,4 @@
+#!/bin/bash  
 set -eo pipefail
 
 # Parameters with default values (can override):
@@ -116,22 +117,31 @@ else
      docker images "postgres-*"
 
      INSTANCE_IMAGE_NAME="${registry}/postgres-instance:$(cat ./images/postgres-instance-tag)"
-     echo "PUSHING ${INSTANCE_IMAGE_NAME}"
+     echo "PUSHING ${INSTANCE_IMAGE_NAME} to $registry"
      docker tag $(cat ./images/postgres-instance-id) ${INSTANCE_IMAGE_NAME}
      docker push ${INSTANCE_IMAGE_NAME}
 
      OPERATOR_IMAGE_NAME="${registry}/postgres-operator:$(cat ./images/postgres-operator-tag)"
-     echo "PUSHING ${OPERATOR_IMAGE_NAME}"
+     echo "PUSHING ${OPERATOR_IMAGE_NAME} to $registry"
      docker tag $(cat ./images/postgres-operator-id) ${OPERATOR_IMAGE_NAME}
      docker push ${OPERATOR_IMAGE_NAME}
 
      if [ $install_operator -eq 1 ]
      then
           echo "INSTALL POSTGRES OPERATOR"
-          cp "$cwd/operator-values-override.yaml" ./
-          # TODO: ytt
+          override_file_name="operator-values-override.yaml"
+          cp "$cwd/$override_file_name" ./
+
+          operatorImage="$registry/postgres-operator"
+          postgresImage="$registry/postgres-instance"
+
+          ytt -f $override_file_name \
+               --data-value-yaml operatorImage=$operatorImage \
+               --data-value-yaml postgresImage=$postgresImage \
+               --output-files "./out"
+
           helm install $operator_name "./operator" \
-               --values=operator-values-override.yaml \
+               --values="./out/$override_file_name" \
                --namespace=$namespace \
                --wait 
 

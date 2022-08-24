@@ -1,2 +1,4 @@
+#@ load("@ytt:data", "data")
+
 operatorImage: #@ operator-image
 postgresImage: #@ postgres-image
