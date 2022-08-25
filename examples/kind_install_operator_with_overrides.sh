@@ -7,6 +7,7 @@ operator_name="postgres-operator"
 offline_path="/home/dmitry/Downloads"
 operator_version="1.8.0"
 filename="postgres-for-kubernetes-v$operator_version"
+registry="localhost:5001"
 
 cwd=$(pwd)
 cd $offline_path
