@@ -146,6 +146,7 @@ else
                --wait 
 
           helm ls --namespace $namespace
+          $kubectl get serviceaccount
      fi
 
      cd $cwd
