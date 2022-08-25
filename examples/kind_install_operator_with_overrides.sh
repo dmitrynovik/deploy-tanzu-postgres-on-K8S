@@ -12,6 +12,14 @@ cwd=$(pwd)
 cd $offline_path
 cd $filename
 
+operatorImage="$registry/postgres-operator"
+postgresImage="$registry/postgres-instance"
+
+ytt -f $override_file_name \
+    --data-value-yaml operatorImage=$operatorImage \
+    --data-value-yaml postgresImage=$postgresImage \
+    --output-files "./out"
+
 helm install $operator_name "./operator" \
     --values="./out/$override_file_name" \
     --namespace=$namespace \
