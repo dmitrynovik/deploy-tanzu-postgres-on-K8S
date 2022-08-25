@@ -11,6 +11,7 @@ filename="postgres-for-kubernetes-v$operator_version"
 cwd=$(pwd)
 cd $offline_path
 cd $filename
+cp "$cwd/$override_file_name" ./
 
 operatorImage="$registry/postgres-operator"
 postgresImage="$registry/postgres-instance"
