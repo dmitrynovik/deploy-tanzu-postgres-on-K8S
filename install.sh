@@ -79,6 +79,7 @@ then
 
      if [ $install_cert_manager -eq 1 ]
      then
+          echo "INSTALL CERT-MANAGER"
           $kubectl create namespace cert-manager --dry-run=client -o yaml | $kubectl apply -f-
           helm repo add jetstack https://charts.jetstack.io
           helm repo update
