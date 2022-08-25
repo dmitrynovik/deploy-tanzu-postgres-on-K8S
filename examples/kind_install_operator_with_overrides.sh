@@ -14,8 +14,8 @@ cd $offline_path
 cd $filename
 cp "$cwd/$override_file_name" ./
 
-operatorImage="$registry/postgres-operator"
-postgresImage="$registry/postgres-instance"
+operatorImage="$registry/postgres-operator:v$operator_version"
+postgresImage="$registry/postgres-instance:v$operator_version"
 
 ytt -f $override_file_name \
     --data-value-yaml operatorImage=$operatorImage \
