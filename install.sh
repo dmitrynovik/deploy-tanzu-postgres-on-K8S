@@ -24,7 +24,7 @@ offline=1
 offline_path="~/Downloads"
 filename="postgres-for-kubernetes-v$operator_version"
 filename_with_extension="$filename.tar.gz"
-local_registry=localhost
+push_images_to_local_registry=1
 
 while [ $# -gt 0 ]; do
 
@@ -68,6 +68,7 @@ fi
 
 if [ $offline -ne 1 ]
 then
+     postgresImage="registry.tanzu.vmware.com/pivotal-gemfire/vmware-gemfire:$gemfire_version"
 
      if [ $install_helm -eq 1 ]
      then
@@ -101,40 +102,47 @@ then
 
 else
      # offline installation
-     cwd=$(pwd)
-     cd $offline_path
+     operatorImage="$registry/postgres-operator:v$operator_version"
+     postgresImage="$registry/postgres-instance:v$operator_version"
 
-     echo "UNZIPPING ARCHIVE: $filename_with_extension"
-     tar xzf $filename_with_extension
-     cd $filename
+     if [ $push_images_to_local_registry -eq 1 ]
+     then
+          cwd=$(pwd)
+          cd $offline_path
 
-     echo "LOADING POSTGRES IMAGE..."
-     docker load -i ./images/postgres-instance
-     
-     echo "LOADING POSTGRES K8S OPERATOR IMAGE..."
-     docker load -i ./images/postgres-operator
+          echo "UNZIPPING ARCHIVE: $filename_with_extension"
+          if [[ ! -f $filename_with_extension ]] ; then
+               echo "ERROR: FILE $filename_with_extension MISSING!"
+               exit 1
+          fi
+          tar xzf $filename_with_extension
+          cd $filename
 
-     echo "VERIFYING IMAGES:"
-     docker images "postgres-*"
+          echo "LOADING POSTGRES IMAGE..."
+          docker load -i ./images/postgres-instance
+          
+          echo "LOADING POSTGRES K8S OPERATOR IMAGE..."
+          docker load -i ./images/postgres-operator
 
-     INSTANCE_IMAGE_NAME="${registry}/postgres-instance:$(cat ./images/postgres-instance-tag)"
-     echo "PUSHING ${INSTANCE_IMAGE_NAME} to $registry"
-     docker tag $(cat ./images/postgres-instance-id) ${INSTANCE_IMAGE_NAME}
-     docker push ${INSTANCE_IMAGE_NAME}
+          echo "VERIFYING IMAGES:"
+          docker images "postgres-*"
 
-     OPERATOR_IMAGE_NAME="${registry}/postgres-operator:$(cat ./images/postgres-operator-tag)"
-     echo "PUSHING ${OPERATOR_IMAGE_NAME} to $registry"
-     docker tag $(cat ./images/postgres-operator-id) ${OPERATOR_IMAGE_NAME}
-     docker push ${OPERATOR_IMAGE_NAME}
+          INSTANCE_IMAGE_NAME="${registry}/postgres-instance:$(cat ./images/postgres-instance-tag)"
+          echo "PUSHING ${INSTANCE_IMAGE_NAME} to $registry"
+          docker tag $(cat ./images/postgres-instance-id) ${INSTANCE_IMAGE_NAME}
+          docker push ${INSTANCE_IMAGE_NAME}
+
+          OPERATOR_IMAGE_NAME="${registry}/postgres-operator:$(cat ./images/postgres-operator-tag)"
+          echo "PUSHING ${OPERATOR_IMAGE_NAME} to $registry"
+          docker tag $(cat ./images/postgres-operator-id) ${OPERATOR_IMAGE_NAME}
+          docker push ${OPERATOR_IMAGE_NAME}
+     fi
 
      if [ $install_operator -eq 1 ]
      then
           echo "INSTALL POSTGRES OPERATOR"
           override_file_name="operator-values-override.yaml"
           cp "$cwd/$override_file_name" ./
-
-          operatorImage="$registry/postgres-operator:v$operator_version"
-          postgresImage="$registry/postgres-instance:v$operator_version"
 
           ytt -f $override_file_name \
                --data-value-yaml operatorImage=$operatorImage \
@@ -157,12 +165,11 @@ fi
 # $kubectl wait pods -n $namespace -l app.kubernetes.io/component=gemfire-controller-manager \
 #      --for condition=Ready --timeout $wait_pod_timeout
 # sleep 10
-exit 1
 
 echo "CREATE $clustername CLUSTER"
 ytt -f gemfire-crd.yml \
      --data-value-yaml cluster_name=$cluster_name \
-     --data-value-yaml image="registry.tanzu.vmware.com/pivotal-gemfire/vmware-gemfire:$gemfire_version" \
+     --data-value-yaml image=$postgresImage \
      --data-value-yaml servers=$servers \
      --data-value-yaml storage=$storage \
      --data-value-yaml storageclassname=$storageclassname \
