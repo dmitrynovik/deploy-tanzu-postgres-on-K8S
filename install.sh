@@ -67,7 +67,7 @@ $kubectl create namespace $namespace --dry-run=client -o yaml | $kubectl apply -
 if [ $create_registry_secret -eq 1 ]
 then
      echo "CREATE DOCKER REGISTRY SECRET"
-     $kubectl create secret docker-registry image-pull-secret --namespace=$namespace --docker-server=$registry \
+     $kubectl create secret docker-registry regsecret --namespace=$namespace --docker-server=$registry \
           --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
           | $kubectl apply -f-
 fi
@@ -99,6 +99,10 @@ then
           echo "CONNECTING TO REGISTRY: $registry"
           export HELM_EXPERIMENTAL_OCI=1
           helm registry login -u $vmwareuser -p $vmwarepassword $registry
+          tmp_dir="$unpack_to_dir/postgres-operator-chart"
+          if [[ -d $tmp_dir ]] ; then
+               rm -rf $tmp_dir
+          fi
           helm pull "oci://$registry/tanzu-sql-postgres/postgres-operator-chart" --version v$operator_version --untar --untardir $unpack_to_dir
 
           echo "INSTALL POSTGRES OPERATOR"
