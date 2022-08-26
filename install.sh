@@ -2,18 +2,18 @@
 set -eo pipefail
 
 # Parameters with default values (can override):
-serviceaccount=rabbitmq
 namespace="tanzu-postgres"
 kubectl=kubectl
 registry="registry.tanzu.vmware.com"
 operator_version="1.8.0"
 postgres_version=$operator_version
 instance_name="tanzu-postgres-instance"
+
 install_helm=1
 install_cert_manager=1
 create_registry_secret=1
 install_operator=1
-servers=1
+
 storage_size=1G
 storage_class_name="standard"
 cpu=0.8
@@ -22,8 +22,6 @@ backup_location=""
 service_type=ClusterIP
 log_level=""
 certificate_secret_name=""
-
-wait_pod_timeout=120s
 cert_manager_version=1.9.1
 operator_name="postgres-operator"
 unpack_to_dir="/tmp"
@@ -31,7 +29,7 @@ offline=1
 offline_path="~/Downloads"
 filename="postgres-for-kubernetes-v$operator_version"
 filename_with_extension="$filename.tar.gz"
-push_images_to_local_registry=1
+push_images_to_private_registry=1
 high_availability=1
 
 while [ $# -gt 0 ]; do
@@ -116,7 +114,7 @@ else
      operatorImage="$registry/postgres-operator:v$operator_version"
      postgresImage="$registry/postgres-instance:v$postgres_version"
 
-     if [ $push_images_to_local_registry -eq 1 ]
+     if [ $push_images_to_private_registry -eq 1 ]
      then
           cwd=$(pwd)
           cd $offline_path
@@ -185,7 +183,6 @@ ytt -f postgres-crd.yml \
      --data-value-yaml high_availability=$high_availability \
      --data-value-yaml service_type=$service_type \
      --data-value-yaml log_level=$log_level \
-     --data-value-yaml servers=$servers \
      | $kubectl --namespace=$namespace apply -f-
 
 $kubectl -n $namespace get postgres $instance_name -o yaml
