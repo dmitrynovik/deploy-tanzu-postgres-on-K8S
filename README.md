@@ -3,7 +3,7 @@
 ## To make this work, you must have:
 - *NIX Operating System
 - `kubectl` utility pointing to K8S cluster
-- 
+- `carvel/ytt` installed
 ## Online option
 Pass `vmwareuser` and `vmwarepassword` parameters. Also, `--offline 0`
 Example:
