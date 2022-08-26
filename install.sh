@@ -15,10 +15,13 @@ create_registry_secret=1
 install_operator=1
 servers=1
 storage_size=1G
-storage_class_name=""
+storage_class_name="standard"
 cpu=0.8
 memory=800Mi
 backup_location=""
+service_type=ClusterIP
+log_level=""
+certificate_secret_name=""
 
 wait_pod_timeout=120s
 cert_manager_version=1.9.1
@@ -30,9 +33,6 @@ filename="postgres-for-kubernetes-v$operator_version"
 filename_with_extension="$filename.tar.gz"
 push_images_to_local_registry=1
 high_availability=1
-service_type=ClusterIP
-log_level=Info
-certificate_secret_name=""
 
 while [ $# -gt 0 ]; do
 
@@ -169,25 +169,20 @@ else
 fi
 
 echo "CREATE $clustername CLUSTER"
-pwd=$(pwd)
-echo $pwd
 ytt -f postgres-crd.yml \
+     --data-value-yaml backup_location=$backup_location \
+     --data-value-yaml certificate_secret_name=$certificate_secret_name \
+     --data-value-yaml storage_class_name=$storage_class_name \
+     --data-value-yaml storage_size=$storage_size \
+     --data-value-yaml cpu=$cpu \
+     --data-value-yaml memory=$memory \
      --data-value-yaml instance_name=$instance_name \
      --data-value-yaml image=$postgresImage \
      --data-value-yaml high_availability=$high_availability \
      --data-value-yaml service_type=$service_type \
-     --data-value-yaml log_level=$log_level
-     --data-value-yaml certificate_secret_name=$certificate_secret_name \
+     --data-value-yaml log_level=$log_level \
      --data-value-yaml servers=$servers \
-     --data-value-yaml storage_size=$storage_size \
-     --data-value-yaml storage_class_name=$storage_class_name \
-     --data-value-yaml cpu=$cpu \
-     --data-value-yaml memory=$memory \
-     --data-value-yaml backup_location=$backup_location \
      | $kubectl --namespace=$namespace apply -f-
 
-$kubectl -n $namespace get GemFireClusters
-
-
-
+$kubectl -n $namespace get postgres $instance_name -o yaml
 
