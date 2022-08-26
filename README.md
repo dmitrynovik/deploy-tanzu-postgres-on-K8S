@@ -5,10 +5,10 @@
 - `kubectl` utility pointing to K8S cluster
 - `carvel/ytt` installed
 ## Online option
-Pass `vmwareuser` and `vmwarepassword` parameters. Also, `--offline 0`
+Pass `registry_user` and `registry_password` parameters. Also, `--offline 0`
 Example:
 ```
-./install.sh --vmwareuser USER --vmwarepassword PASS --offline 0
+./install.sh --registry_user USER --registry_password PASS --offline 0
 ```
 It installs
 * Helm (if N/A)
@@ -24,10 +24,10 @@ It installs
 * Downloaded archive file e.g. `postgres-for-kubernetes-v1.8.0.tar.gz`
 * Local registry
 
-In addition to online option, must pass `--offline 1`, `--registry <REGIDTRY URL>`, `--offline_path` and `--filename_with_extension`
+Pass `--offline 1`, `--registry <REGIDTRY URL>`, `--offline_path` and `--filename_with_extension`
   Example:
   ```
-  ./install.sh --vmwareuser USER --vmwarepassword PASS --offline 1 --registry "localhost:5001" --offline_path "/home/dmitry/Downloads" --filename_with_extension "postgres-for-kubernetes-v1.8.0.tar.gz"
+  ./install.sh --registry "localhost:5001" --offline_path "/home/dmitry/Downloads" --filename_with_extension "postgres-for-kubernetes-v1.8.0.tar.gz" --registry_user USER --registry_password PASS
   ```
 
 ## Production

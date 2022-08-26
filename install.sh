@@ -47,31 +47,24 @@ case $kubectl in
     *) openshift=0 ;;
 esac
 
-if [ -z $vmwareuser ]
-then
-     echo "vmwareuser not set"
-     exit 1
-fi
-
-if [ -z $vmwarepassword ] 
-then
-     echo "vmwarepassword not set"
-     exit 1
-fi
-
 echo "CREATE NAMESPACE $namespace if it does not exist..."
 $kubectl create namespace $namespace --dry-run=client -o yaml | $kubectl apply -f-
 
-if [ $create_registry_secret -eq 1 ]
-then
-     echo "CREATE DOCKER REGISTRY SECRET"
-     $kubectl create secret docker-registry regsecret --namespace=$namespace --docker-server=$registry \
-          --docker-username="$vmwareuser" --docker-password="$vmwarepassword" --dry-run=client -o yaml \
-          | $kubectl apply -f-
-fi
-
 if [ $offline -ne 1 ]
 then
+
+     if [ -z $registry_user ]
+     then
+          echo "registry_user not set"
+          exit 1
+     fi
+
+     if [ -z $registry_password ] 
+     then
+          echo "registry_password not set"
+          exit 1
+     fi
+
      postgresImage="registry.tanzu.vmware.com/tanzu-sql-postgres/postgres-instance:$postgres_version"
 
      if [ $install_helm -eq 1 ]
@@ -92,11 +85,19 @@ then
           $kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v$cert_manager_version/cert-manager.yaml
      fi
 
+     if [ $create_registry_secret -eq 1 ]
+     then
+          echo "CREATE DOCKER REGISTRY SECRET"
+          $kubectl create secret docker-registry regsecret --namespace=$namespace --docker-server=$registry \
+               --docker-username="$registry_user" --docker-password="$registry_password" --dry-run=client -o yaml \
+               | $kubectl apply -f-
+     fi
+
      if [ $install_operator -eq 1 ]
      then
           echo "CONNECTING TO REGISTRY: $registry"
           export HELM_EXPERIMENTAL_OCI=1
-          helm registry login -u $vmwareuser -p $vmwarepassword $registry
+          helm registry login -u $registry_user -p $registry_password $registry
           tmp_dir="$unpack_to_dir/postgres-operator-chart"
           if [[ -d $tmp_dir ]] ; then
                rm -rf $tmp_dir
@@ -126,6 +127,12 @@ else
           fi
           tar xzf $filename_with_extension
           cd $filename
+
+          if [ $registry_user != "" ] && [ $registry_password != "" ]
+          then
+               echo "LOGGING TO REGISTRY: $registry"
+               docker login --username $registry_user --password $registry_password $registry
+          fi
 
           echo "LOADING POSTGRES IMAGE..."
           docker load -i ./images/postgres-instance
