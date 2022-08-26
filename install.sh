@@ -14,9 +14,13 @@ install_cert_manager=1
 create_registry_secret=1
 install_operator=1
 servers=1
-storage=1Gi
-storageclassname=""
-wait_pod_timeout=60s
+storage_size=1G
+storage_class_name=""
+cpu=0.8
+memory=800Mi
+backup_location=""
+
+wait_pod_timeout=120s
 cert_manager_version=1.9.1
 operator_name="postgres-operator"
 unpack_to_dir="/tmp"
@@ -26,6 +30,9 @@ filename="postgres-for-kubernetes-v$operator_version"
 filename_with_extension="$filename.tar.gz"
 push_images_to_local_registry=1
 high_availability=1
+service_type=ClusterIP
+log_level=Info
+certificate_secret_name=""
 
 while [ $# -gt 0 ]; do
 
@@ -53,8 +60,6 @@ then
      echo "vmwarepassword not set"
      exit 1
 fi
-
-if [ -z $storageclassname ]; then persistent=0; else persistent=1; fi
 
 echo "CREATE NAMESPACE $namespace if it does not exist..."
 $kubectl create namespace $namespace --dry-run=client -o yaml | $kubectl apply -f-
@@ -170,10 +175,15 @@ ytt -f postgres-crd.yml \
      --data-value-yaml instance_name=$instance_name \
      --data-value-yaml image=$postgresImage \
      --data-value-yaml high_availability=$high_availability \
+     --data-value-yaml service_type=$service_type \
+     --data-value-yaml log_level=$log_level
+     --data-value-yaml certificate_secret_name=$certificate_secret_name \
      --data-value-yaml servers=$servers \
-     --data-value-yaml storage=$storage \
-     --data-value-yaml storageclassname=$storageclassname \
-     --data-value-yaml persistent=$persistent \
+     --data-value-yaml storage_size=$storage_size \
+     --data-value-yaml storage_class_name=$storage_class_name \
+     --data-value-yaml cpu=$cpu \
+     --data-value-yaml memory=$memory \
+     --data-value-yaml backup_location=$backup_location \
      | $kubectl --namespace=$namespace apply -f-
 
 $kubectl -n $namespace get GemFireClusters

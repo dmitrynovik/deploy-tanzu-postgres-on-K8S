@@ -6,39 +6,47 @@ kind: Postgres
 metadata:
   name: #@ data.values.instance_name
 spec:
+ #!
+ #! Global features
+ #!
   pgConfig:
     dbname: postgres-sample
     username: pgadmin
     appUser: pgappuser
   postgresVersion:
     name: postgres-14
-  serviceType: ClusterIP
+  serviceType: #@ data.values.service_type
+ #! serviceAnnotations:
   seccompProfile:
     type: RuntimeDefault
   imagePullSecret:
     name: regsecret
   #@ if data.values.high_availability > 0:
-    highAvailability:
-      enabled: true
+  highAvailability:
+    enabled: true
   #@ end
-  #  logLevel: Debug
-  #  backupLocation:
-  #    name: backuplocation-sample
-  #  certificateSecretName:
+  logLevel: #@ data.values.log_level
+  #@ if data.values.backup_location != "":
+  backupLocation:
+     name: #@ data.values.backup_location
+  #@ end
+  #@ if data.values.certificate_secret_name != "":
+  certificateSecretName: #@ data.values.certificate_secret_name
+  #@ end
 
-  #
-  # Data Pod features
-  #
-  storageClassName: standard
-  storageSize: 800M
-  cpu: "0.8"
-  memory: 800Mi
+ #!
+ #! Data Pod features
+ #!
+  storageClassName: #@data.values.storage_class_name
+  storageSize: #@data.values.storage_size
+  cpu: #@ data.values.cpu
+  memory: #@data.values.memory
   dataPodConfig:
-#    tolerations:
-#      - key:
-#        operator:
-#        value:
-#        effect:
+#!    tolerations:
+#!      - key:
+#!        operator:
+#!        value:
+#!        effect:
     affinity:
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -58,17 +66,17 @@ spec:
             weight: 100
 
 
-  #
-  # Monitor Pod features
-  #
-  monitorStorageClassName: standard
+ #!
+ #! Monitor Pod features
+ #!
+  monitorStorageClassName: #@data.values.storage_class_name
   monitorStorageSize: 1G
   monitorPodConfig:
-#    tolerations:
-#      - key:
-#        operator:
-#        value:
-#        effect:
+#!    tolerations:
+#!      - key:
+#!        operator:
+#!        value:
+#!        effect:
     affinity:
       podAntiAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
@@ -87,9 +95,9 @@ spec:
               topologyKey: kubernetes.io/hostname
             weight: 100
 
-  #
-  # Resources
-  #
+ #!
+ #! Resources
+ #!
   resources:
     monitor:
       limits:
