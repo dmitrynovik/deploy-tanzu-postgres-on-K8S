@@ -8,7 +8,7 @@ kubectl=kubectl
 registry="registry.tanzu.vmware.com"
 operator_version="1.8.0"
 postgres_version=$operator_version
-cluster_name="gemfire-cluster"
+instance_name="tanzu-postgres-instance"
 install_helm=1
 install_cert_manager=1
 create_registry_secret=1
@@ -25,6 +25,7 @@ offline_path="~/Downloads"
 filename="postgres-for-kubernetes-v$operator_version"
 filename_with_extension="$filename.tar.gz"
 push_images_to_local_registry=1
+high_availability=1
 
 while [ $# -gt 0 ]; do
 
@@ -68,7 +69,7 @@ fi
 
 if [ $offline -ne 1 ]
 then
-     postgresImage="registry.tanzu.vmware.com/pivotal-gemfire/vmware-gemfire:$postgres_version"
+     postgresImage="registry.tanzu.vmware.com/tanzu-sql-postgres/postgres-instance:$postgres_version"
 
      if [ $install_helm -eq 1 ]
      then
@@ -98,6 +99,7 @@ then
           echo "INSTALL POSTGRES OPERATOR"
           helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
           helm ls --namespace $namespace
+          sleep 10
      fi
 
 else
@@ -156,20 +158,18 @@ else
 
           helm ls --namespace $namespace
           $kubectl get serviceaccount
+          cd $cwd
+          sleep 10
      fi
-
-     cd $cwd
 fi
 
-# echo "WAIT FOR gemfire-controller-manager TO BE READY"
-# $kubectl wait pods -n $namespace -l app.kubernetes.io/component=gemfire-controller-manager \
-#      --for condition=Ready --timeout $wait_pod_timeout
-# sleep 10
-
 echo "CREATE $clustername CLUSTER"
-ytt -f gemfire-crd.yml \
-     --data-value-yaml cluster_name=$cluster_name \
+pwd=$(pwd)
+echo $pwd
+ytt -f postgres-crd.yml \
+     --data-value-yaml instance_name=$instance_name \
      --data-value-yaml image=$postgresImage \
+     --data-value-yaml high_availability=$high_availability \
      --data-value-yaml servers=$servers \
      --data-value-yaml storage=$storage \
      --data-value-yaml storageclassname=$storageclassname \
