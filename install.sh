@@ -177,7 +177,7 @@ else
      fi
 fi
 
-echo "CREATE $clustername CLUSTER"
+echo "CREATE $instance_name POSTGRES INSTANCE"
 ytt -f postgres-crd.yml \
      --data-value-yaml backup_location=$backup_location \
      --data-value-yaml certificate_secret_name=$certificate_secret_name \
