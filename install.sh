@@ -7,7 +7,7 @@ namespace="tanzu-postgres"
 kubectl=kubectl
 registry="registry.tanzu.vmware.com"
 operator_version="1.8.0"
-gemfire_version="9.15.0"
+postgres_version=$operator_version
 cluster_name="gemfire-cluster"
 install_helm=1
 install_cert_manager=1
@@ -68,7 +68,7 @@ fi
 
 if [ $offline -ne 1 ]
 then
-     postgresImage="registry.tanzu.vmware.com/pivotal-gemfire/vmware-gemfire:$gemfire_version"
+     postgresImage="registry.tanzu.vmware.com/pivotal-gemfire/vmware-gemfire:$postgres_version"
 
      if [ $install_helm -eq 1 ]
      then
@@ -103,7 +103,7 @@ then
 else
      # offline installation
      operatorImage="$registry/postgres-operator:v$operator_version"
-     postgresImage="$registry/postgres-instance:v$operator_version"
+     postgresImage="$registry/postgres-instance:v$postgres_version"
 
      if [ $push_images_to_local_registry -eq 1 ]
      then
