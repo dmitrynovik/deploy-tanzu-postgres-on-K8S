@@ -192,5 +192,5 @@ ytt -f postgres-crd.yml \
      --data-value-yaml log_level=$log_level \
      | $kubectl --namespace=$namespace apply -f-
 
-$kubectl -n $namespace get postgres $instance_name -o yaml
+# $kubectl -n $namespace get postgres $instance_name -o yaml
 
