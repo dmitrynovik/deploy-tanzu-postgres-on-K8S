@@ -30,6 +30,11 @@ Pass `--offline 1`, `--registry <REGIDTRY URL>`, `--offline_path` and `--filenam
   ./install.sh --registry "localhost:5001" --offline_path "/home/dmitry/Downloads" --filename_with_extension "postgres-for-kubernetes-v1.8.0.tar.gz" --registry_user USER --registry_password PASS
   ```
 
+### Modify cluster only
+```
+./install.sh --offline 1 --install_operator 0 --push_images_to_private_registry 0 
+```
+
 ## Production
 Override `cpu`, `memory` and `backup_location` (see below).
 
