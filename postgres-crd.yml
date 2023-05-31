@@ -13,9 +13,9 @@ spec:
     dbname: postgres-sample
     username: pgadmin
     appUser: pgappuser
-    # additionalDatabases:
-    #   - dbName: twitter-emergency
-    #     appUser: pgappuser
+    #! additionalDatabases:
+    #!   - dbName: twitter-emergency
+    #!     appUser: pgappuser
   postgresVersion:
     name: postgres-14
   serviceType: #@ data.values.service_type
