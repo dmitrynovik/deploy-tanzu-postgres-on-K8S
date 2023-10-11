@@ -44,8 +44,6 @@ spec:
  #!
   storageClassName: #@ data.values.storage_class_name
   storageSize: #@ data.values.storage_size
-  cpu: #@ data.values.cpu
-  memory: #@ data.values.memory
   dataPodConfig:
 #!    tolerations:
 #!      - key:

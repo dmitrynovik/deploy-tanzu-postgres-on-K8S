@@ -23,7 +23,7 @@ service_type=LoadBalancer
 log_level=""
 certificate_secret_name=""
 cert_manager_version=1.13.1
-operator_name="postgres-operator"
+operator_name="vmware-sql-postgres-operator"
 unpack_to_dir="/tmp"
 offline=1
 offline_path="$HOME/Downloads"
@@ -102,10 +102,10 @@ then
           if [[ -d $tmp_dir ]] ; then
                rm -rf $tmp_dir
           fi
-          helm pull "oci://$registry/tanzu-sql-postgres/postgres-operator-chart" --version v$operator_version --untar --untardir $unpack_to_dir
+          helm pull "oci://$registry/tanzu-sql-postgres/vmware-sql-postgres-operator" --version v$operator_version --untar --untardir $unpack_to_dir --plain-http
 
           echo "INSTALL POSTGRES OPERATOR"
-          helm install $operator_name $unpack_to_dir/postgres-operator/ --wait --namespace $namespace
+          helm install $operator_name $unpack_to_dir/$operator_name/ --wait --namespace $namespace
           helm ls --namespace $namespace
           sleep 10
      fi
