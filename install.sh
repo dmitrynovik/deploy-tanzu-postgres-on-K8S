@@ -5,7 +5,7 @@ set -eo pipefail
 namespace="tanzu-postgres"
 kubectl=kubectl
 registry="registry.tanzu.vmware.com"
-operator_version="2.0.0"
+operator_version="2.2.0"
 postgres_version=$operator_version
 instance_name="tanzu-postgres-instance"
 
@@ -22,7 +22,7 @@ backup_location=""
 service_type=LoadBalancer
 log_level=""
 certificate_secret_name=""
-cert_manager_version=1.9.1
+cert_manager_version=1.13.1
 operator_name="postgres-operator"
 unpack_to_dir="/tmp"
 offline=1
