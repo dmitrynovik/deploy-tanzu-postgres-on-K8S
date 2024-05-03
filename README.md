@@ -68,3 +68,7 @@ Override `cpu`, `memory` and `backup_location` (see below).
 | filename_with_extension | The full file name of the archive |
 | push_images_to_private_registry | `1` | If offline, whether to push images to private registry (default: `Yes`) |
 | high_availability | `1` | If to create HA mirror |
+
+## Connecting to the instance
+Execute the `examples/get-credentials.sh` to retrieve the credentials.
+For more information, refer to: [Accessing a Postgres Instance](https://docs.vmware.com/en/VMware-SQL-with-Postgres-for-Kubernetes/2.3/vmware-postgres-k8s/GUID-accessing.html)
