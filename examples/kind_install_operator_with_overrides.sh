@@ -17,12 +17,12 @@ cp "$cwd/$override_file_name" ./
 operatorImage="$registry/postgres-operator:v$operator_version"
 postgresImage="$registry/postgres-instance:v$operator_version"
 
-ytt -f $override_file_name \
+sudo ytt -f $override_file_name \
     --data-value-yaml operatorImage=$operatorImage \
     --data-value-yaml postgresImage=$postgresImage \
     --output-files "./out"
 
-helm install $operator_name "./operator" \
+sudo helm install $operator_name "./operator" \
     --values="./out/$override_file_name" \
     --namespace=$namespace \
     --wait 
