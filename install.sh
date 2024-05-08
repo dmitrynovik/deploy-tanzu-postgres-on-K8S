@@ -174,7 +174,7 @@ else
           sudo $kubectl get serviceaccount
           cd $cwd
           sudo $kubectl wait --namespace $namespace wait pod --selector=app=postgres-operator --for condition=ready
-     fisleep
+     fi
 fi
 
 echo "CREATE $instance_name POSTGRES INSTANCE"
