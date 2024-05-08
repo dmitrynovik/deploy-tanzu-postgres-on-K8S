@@ -59,12 +59,6 @@ then
           exit 1
      fi
 
-     if [ -z $registry_password ] 
-     then
-          echo "registry_password not set"
-          exit 1
-     fi
-
      postgresImage="registry.tanzu.vmware.com/tanzu-sql-postgres/postgres-instance:$postgres_version"
 
      if [ $install_helm -eq 1 ]
@@ -97,7 +91,7 @@ then
      then
           echo "CONNECTING TO REGISTRY: $registry"
           export HELM_EXPERIMENTAL_OCI=1
-          sudo helm registry login -u $registry_user -p $registry_password $registry
+          sudo helm registry login -u $registry_user $registry
           tmp_dir="$unpack_to_dir/postgres-operator-chart"
           if [[ -d $tmp_dir ]] ; then
                rm -rf $tmp_dir
@@ -107,7 +101,7 @@ then
           echo "INSTALL POSTGRES OPERATOR"
           sudo helm install $operator_name $unpack_to_dir/$operator_name/ --wait --namespace $namespace
           sudo helm ls --namespace $namespace
-          sleep 10
+          sudo $kubectl --namespace $namespace wait pod --selector=app=postgres-operator --for condition=ready
      fi
 
 else
@@ -128,10 +122,10 @@ else
           tar xzf $filename_with_extension
           cd $filename
 
-          if [ $registry_user != "" ] && [ $registry_password != "" ]
+          if [ $registry_user != "" ] 
           then
                echo "LOGGING TO REGISTRY: $registry"
-               sudo docker login --username $registry_user --password $registry_password $registry
+               sudo docker login --username $registry_user $registry
           fi
 
           echo "LOADING POSTGRES IMAGE..."
@@ -173,7 +167,7 @@ else
           sudo helm ls --namespace $namespace
           sudo $kubectl get serviceaccount
           cd $cwd
-          sleep 10
+          sudo $kubectl --namespace $namespace wait pod --selector=app=postgres-operator --for condition=ready
      fi
 fi
 
