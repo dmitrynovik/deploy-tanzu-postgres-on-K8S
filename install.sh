@@ -59,12 +59,6 @@ then
           exit 1
      fi
 
-     if [ -z $registry_password ] 
-     then
-          echo "registry_password not set"
-          exit 1
-     fi
-
      postgresImage="registry.tanzu.vmware.com/tanzu-sql-postgres/postgres-instance:$postgres_version"
 
      if [ $install_helm -eq 1 ]
@@ -97,7 +91,7 @@ then
      then
           echo "CONNECTING TO REGISTRY: $registry"
           export HELM_EXPERIMENTAL_OCI=1
-          sudo helm registry login -u $registry_user -p $registry_password $registry
+          sudo helm registry login -u $registry_user $registry
           tmp_dir="$unpack_to_dir/postgres-operator-chart"
           if [[ -d $tmp_dir ]] ; then
                rm -rf $tmp_dir
@@ -128,10 +122,10 @@ else
           tar xzf $filename_with_extension
           cd $filename
 
-          if [ $registry_user != "" ] && [ $registry_password != "" ]
+          if [ $registry_user != "" ] 
           then
                echo "LOGGING TO REGISTRY: $registry"
-               sudo docker login --username $registry_user --password $registry_password $registry
+               sudo docker login --username $registry_user $registry
           fi
 
           echo "LOADING POSTGRES IMAGE..."
