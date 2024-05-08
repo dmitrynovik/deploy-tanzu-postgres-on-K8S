@@ -107,7 +107,7 @@ then
           echo "INSTALL POSTGRES OPERATOR"
           sudo helm install $operator_name $unpack_to_dir/$operator_name/ --wait --namespace $namespace
           sudo helm ls --namespace $namespace
-          sleep 10
+          sudo $kubectl wait --namespace $namespace wait pod --selector=app=postgres-operator --for condition=ready
      fi
 
 else
@@ -173,8 +173,8 @@ else
           sudo helm ls --namespace $namespace
           sudo $kubectl get serviceaccount
           cd $cwd
-          sleep 10
-     fi
+          sudo $kubectl wait --namespace $namespace wait pod --selector=app=postgres-operator --for condition=ready
+     fisleep
 fi
 
 echo "CREATE $instance_name POSTGRES INSTANCE"
